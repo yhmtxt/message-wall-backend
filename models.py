@@ -9,7 +9,7 @@ from configurations import DATABASE_URL
 
 class Message(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    content: str = Field(nullable=False)
+    content: str = Field(nullable=False, min_length=1, max_length=255)
     time: datetime | None = Field(nullable=True)
 
 
