@@ -6,7 +6,7 @@ from fastapi import FastAPI, Body, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import select, desc, func
 
-from models import create_db_and_tables, SessionDep, Message
+from .models import create_db_and_tables, SessionDep, Message
 
 
 @asynccontextmanager

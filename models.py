@@ -4,7 +4,7 @@ from datetime import datetime
 from fastapi import Depends
 from sqlmodel import SQLModel, Field, create_engine, Session
 
-from configurations import DATABASE_URL
+from .configurations import DATABASE_URL
 
 
 class Message(SQLModel, table=True):
