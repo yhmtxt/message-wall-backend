@@ -1,28 +1,36 @@
-from typing import Annotated
-from datetime import datetime
+import uuid
+from enum import StrEnum
 
-from fastapi import Depends
-from sqlmodel import SQLModel, Field, create_engine, Session
+from sqlmodel import SQLModel, Field, Relationship
 
-from .configurations import DATABASE_URL
+
+class UserGroup(StrEnum):
+    ADMIN = "admin"
+    NORMAL = "normal"
+
+
+class UserBase(SQLModel):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str = Field(nullable=False, min_length=1, index=True)
+    user_group: UserGroup = Field(default=UserGroup.NORMAL)
+
+
+class User(UserBase, table=True):
+    hashed_password: str = Field(nullable=False)
+
+    messages: list["Message"] = Relationship(back_populates="user", cascade_delete=True)
+
+
+class UserPublic(UserBase):
+    messages: list["Message"]
 
 
 class Message(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     content: str = Field(nullable=False, min_length=1, max_length=255)
-    time: datetime | None = Field(nullable=True)
+    time_stamp: int | None = Field(nullable=True)
 
-
-engine = create_engine(DATABASE_URL)
-
-
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session
-
-
-SessionDep = Annotated[Session, Depends(get_session)]
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", default_factory=uuid.uuid4, ondelete="CASCADE"
+    )
+    user: User = Relationship(back_populates="messages")
