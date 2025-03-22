@@ -1,5 +1,4 @@
 import time
-from contextlib import asynccontextmanager
 from uuid import UUID
 from typing import Annotated
 from datetime import datetime, timezone, timedelta
@@ -21,17 +20,11 @@ from .models import (
     UserCreate,
     UserGroup,
 )
-from .dependencies import create_db_and_tables, SessionDep, UserDep
-from .configurations import JWT_SECRET_KEY, JWT_ALGORITHM, DEFAULT_ACCESS_TOKEN_EXPIRE_DAYS
+from .dependencies import SessionDep, UserDep
+from .config import JWT_SECRET_KEY, JWT_ALGORITHM, DEFAULT_ACCESS_TOKEN_EXPIRE_DAYS
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    create_db_and_tables()
-    yield
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
