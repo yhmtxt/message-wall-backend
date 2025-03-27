@@ -7,9 +7,9 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import SQLModel, create_engine, Session
 
 from .models import User
-from .configurations import DATABASE_URL, JWT_SECRET_KEY, JWT_ALGORITHM
+from .config import settings
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(settings.DATABASE_URL)
 
 
 def create_db_and_tables() -> None:
@@ -33,7 +33,7 @@ def get_current_user(session: SessionDep, token: Annotated[str, Depends(oauth2_s
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         user_id = payload.get("sub")
         if user_id is None:
             raise credentials_exception

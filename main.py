@@ -22,7 +22,7 @@ from .models import (
     UserGroup,
 )
 from .dependencies import create_db_and_tables, SessionDep, UserDep
-from .configurations import JWT_SECRET_KEY, JWT_ALGORITHM, DEFAULT_ACCESS_TOKEN_EXPIRE_DAYS
+from .config import settings
 
 
 @asynccontextmanager
@@ -48,11 +48,13 @@ crypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def create_access_token(data: dict, expire_delta: timedelta | None = None) -> str:
     payload = data.copy()
     if expire_delta is None:
-        expire = datetime.now(timezone.utc) + timedelta(days=DEFAULT_ACCESS_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(
+            days=settings.DEFAULT_ACCESS_TOKEN_EXPIRE_DAYS
+        )
     else:
         expire = datetime.now(timezone.utc) + expire_delta
     payload |= {"exp": expire}
-    access_token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+    access_token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return access_token
 
 
