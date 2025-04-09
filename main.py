@@ -98,6 +98,12 @@ def sign_up(session: SessionDep, user_create: UserCreate) -> User:
     return user
 
 
+@app.get("/users", response_model=list[UserPublic])
+def get_all_users(session: SessionDep) -> list[User]:
+    users = session.exec(select(User)).all()
+    return list(users)
+
+
 @app.get("/users/{user_id}", response_model=UserPublic)
 def get_user(session: SessionDep, user_id: UUID) -> User:
     user = session.get(User, user_id)
@@ -118,7 +124,8 @@ def get_messages(session: SessionDep, page: Annotated[int, Query(ge=1)] = 1) -> 
     )
     result = session.exec(statement).all()
     messages = [
-        MessageWithUserName(**dict(message), user_name=user.name) for message, user in result
+        MessageWithUserName(**message.model_dump(), user_name=user.name)
+        for message, user in result
     ]
     total = session.exec(select(func.count()).select_from(Message)).one()
     have_next_page = page * page_size < total
