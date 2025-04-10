@@ -2,12 +2,9 @@ import time
 from contextlib import asynccontextmanager
 from uuid import UUID
 from typing import Annotated
-from datetime import datetime, timezone, timedelta
 
-import jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel
-from fastapi import FastAPI, Body, Query, HTTPException, Depends
+from fastapi import FastAPI, Query, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import select, desc, func
@@ -22,7 +19,17 @@ from .models import (
     UserGroup,
 )
 from .dependencies import create_db_and_tables, SessionDep, UserDep
-from .config import settings
+from .utils import create_access_token, get_password_hash, verify_password
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class MessagesPage(BaseModel):
+    messages: list[MessageWithUserName]
+    have_next_page: bool
 
 
 @asynccontextmanager
@@ -40,40 +47,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-crypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def create_access_token(data: dict, expire_delta: timedelta | None = None) -> str:
-    payload = data.copy()
-    if expire_delta is None:
-        expire = datetime.now(timezone.utc) + timedelta(
-            days=settings.DEFAULT_ACCESS_TOKEN_EXPIRE_DAYS
-        )
-    else:
-        expire = datetime.now(timezone.utc) + expire_delta
-    payload |= {"exp": expire}
-    access_token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
-    return access_token
-
-
-def get_password_hash(password: str) -> str:
-    return crypt_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return crypt_context.verify(plain_password, hashed_password)
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class MessagesPage(BaseModel):
-    messages: list[MessageWithUserName]
-    have_next_page: bool
 
 
 @app.post("/sign_in")
