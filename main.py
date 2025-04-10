@@ -77,6 +77,11 @@ def get_all_users(session: SessionDep) -> list[User]:
     return list(users)
 
 
+@app.get("/users/me", response_model=UserPublic)
+def get_current_user(user: UserDep) -> User:
+    return user
+
+
 @app.get("/users/{user_id}", response_model=UserPublic)
 def get_user(session: SessionDep, user_id: UUID) -> User:
     user = session.get(User, user_id)
