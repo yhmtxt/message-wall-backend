@@ -64,6 +64,8 @@ def sign_in(
 
 @app.post("/sign_up", status_code=201, response_model=UserPublic)
 def sign_up(session: SessionDep, user_create: UserCreate) -> User:
+    if session.exec(select(User).where(User.name == user_create.name)).first() is not None:
+        raise HTTPException(status_code=409, detail="User name already exists")
     user = User(name=user_create.name, hashed_password=get_password_hash(user_create.password))
     session.add(user)
     session.commit()
