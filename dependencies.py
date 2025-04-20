@@ -45,4 +45,4 @@ def get_current_user(session: SessionDep, token: Annotated[str, Depends(oauth2_s
     return user
 
 
-UserDep = Annotated[User, Depends(get_current_user)]
+CurrentUserDep = Annotated[User, Depends(get_current_user)]

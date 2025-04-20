@@ -18,7 +18,7 @@ from .models import (
     UserCreate,
     UserGroup,
 )
-from .dependencies import create_db_and_tables, SessionDep, UserDep
+from .dependencies import create_db_and_tables, SessionDep, CurrentUserDep
 from .utils import create_access_token, get_password_hash, verify_password
 
 
@@ -80,8 +80,8 @@ def get_all_users(session: SessionDep) -> list[User]:
 
 
 @app.get("/users/me", response_model=UserPublic)
-def get_current_user(user: UserDep) -> User:
-    return user
+def get_current_user(current_user: CurrentUserDep) -> User:
+    return current_user
 
 
 @app.get("/users/{user_id}", response_model=UserPublic)
@@ -114,21 +114,23 @@ def get_messages(session: SessionDep, page: Annotated[int, Query(ge=1)] = 1) -> 
 
 @app.post("/messages", status_code=201)
 def create_new_message(
-    session: SessionDep, user: UserDep, message_create: MessageCreate
+    session: SessionDep, current_user: CurrentUserDep, message_create: MessageCreate
 ) -> Message:
-    message = Message(content=message_create.content, time_stamp=int(time.time()), user=user)
+    message = Message(
+        content=message_create.content, time_stamp=int(time.time()), user=current_user
+    )
     session.add(message)
     session.commit()
     session.refresh(message)
     return message
 
 
-@app.delete("/messages/{id}", status_code=204)
-def delete_message(session: SessionDep, user: UserDep, id: int) -> None:
-    message = session.get(Message, id)
+@app.delete("/messages/{message_id}", status_code=204)
+def delete_message(session: SessionDep, current_user: CurrentUserDep, message_id: int) -> None:
+    message = session.get(Message, message_id)
     if message is None:
         raise HTTPException(status_code=404, detail="Message not found")
-    if user is not message.user and user.user_group is not UserGroup.ADMIN:
+    if current_user is not message.user and current_user.user_group is not UserGroup.ADMIN:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
     session.delete(message)
     session.commit()
