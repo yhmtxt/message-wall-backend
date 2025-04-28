@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import select
 
 from ..models import User, UserPublic, UserCreate
-from ..dependencies import SessionDep, CurrentUserDep
+from ..dependencies import SessionDep, CurrentUserDep, deny_access_if_not_init
 from ..utils import create_access_token, get_password_hash, verify_password
 
 
@@ -16,7 +16,7 @@ class Token(BaseModel):
     token_type: str
 
 
-router = APIRouter(tags=["users"])
+router = APIRouter(tags=["users"], dependencies=[Depends(deny_access_if_not_init)])
 
 
 @router.post("/sign_in")

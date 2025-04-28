@@ -2,11 +2,11 @@ import time
 from typing import Annotated
 
 from pydantic import BaseModel
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends
 from sqlmodel import select, desc, func
 
 from ..models import Message, MessageWithUserName, MessageCreate, User, UserGroup
-from ..dependencies import SessionDep, CurrentUserDep
+from ..dependencies import SessionDep, CurrentUserDep, deny_access_if_not_init
 
 
 class MessagesPage(BaseModel):
@@ -14,7 +14,7 @@ class MessagesPage(BaseModel):
     have_next_page: bool
 
 
-router = APIRouter(tags=["messages"])
+router = APIRouter(tags=["messages"], dependencies=[Depends(deny_access_if_not_init)])
 
 
 @router.get("/messages")

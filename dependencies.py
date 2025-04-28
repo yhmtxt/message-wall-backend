@@ -1,12 +1,12 @@
-from typing import Annotated, Generator
+from typing import Annotated, Generator, Callable
 
 import jwt
 from jwt.exceptions import InvalidTokenError
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import SQLModel, create_engine, Session, select
 
-from .models import User
+from .models import User, UserGroup
 from .config import settings
 
 engine = create_engine(settings.DATABASE_URL)
@@ -46,3 +46,29 @@ def get_current_user(session: SessionDep, token: Annotated[str, Depends(oauth2_s
 
 
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
+def make_init_checker() -> Callable[[Session], bool]:
+    init = False
+
+    def check_if_init(session: SessionDep) -> bool:
+        nonlocal init
+        if not init:
+            admin_user = session.exec(
+                select(User).where(User.user_group == UserGroup.ADMIN)
+            ).first()
+            if admin_user is not None:
+                init = True
+        return init
+
+    return check_if_init
+
+
+check_if_init = make_init_checker()
+
+InitDep = Annotated[bool, Depends(check_if_init)]
+
+
+def deny_access_if_not_init(init: InitDep) -> None:
+    if not init:
+        raise HTTPException(status_code=400, detail="Application not initialized")
