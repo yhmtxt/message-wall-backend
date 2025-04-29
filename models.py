@@ -10,7 +10,7 @@ class UserGroup(StrEnum):
 
 
 class UserBase(SQLModel):
-    name: str = Field(nullable=False, min_length=1, index=True)
+    name: str = Field(nullable=False, unique=True, min_length=1, index=True)
 
 
 class User(UserBase, table=True):
